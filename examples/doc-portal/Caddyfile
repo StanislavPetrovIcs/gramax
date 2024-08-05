@@ -1,0 +1,30 @@
+:80 {
+    route /* {
+        reverse_proxy doc-portal:80
+    }
+
+    handle_path /-enterprise/diagram-renderer/* {
+        reverse_proxy diagram-renderer:80
+    }
+
+    handle_path /-enterprise/c4viz/* {
+        reverse_proxy c4viz:80
+    }
+
+    handle_path /-enterprise/auth/* {
+        reverse_proxy gramax-auth:80
+    }
+
+    handle_path /-enterprise/enterprise/* {
+        reverse_proxy enterprise:80
+    }
+
+    handle_path /-enterprise/cors-proxy/* {
+        reverse_proxy cors-proxy:80
+    }
+
+    handle_path /-enterprise/auth/* {
+        reverse_proxy auth:80
+    }
+
+}

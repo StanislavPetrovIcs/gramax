@@ -1,0 +1,14 @@
+:80 {
+    handle_path /* {
+        reverse_proxy /-enterprise/diagram-renderer* diagram-renderer:80
+        reverse_proxy /-enterprise/auth* auth:80
+        reverse_proxy /-enterprise/c4viz* c4viz:80
+        reverse_proxy /-enterprise/sso* sso:80
+        reverse_proxy /-enterprise/enterprise* enterprise:80
+    }
+
+    handle_path /-enterprise/cors-proxy* {
+        uri strip_prefix /-enterprise/cors-proxy
+        reverse_proxy cors-proxy:80
+    }
+}

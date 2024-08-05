@@ -1,0 +1,109 @@
+services:
+    caddy:
+        image: caddy:latest
+        container_name: gramax-caddy
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./Caddyfile:/etc/caddy/Caddyfile
+        networks:
+            - gramax
+
+    sso:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:sso-develop
+        container_name: gramax-sso
+        restart: unless-stopped
+        build:
+            context: ../../
+            dockerfile: ./services/target/sso/Dockerfile
+        environment:
+            - AUTHORIZATION_URL=${AUTHORIZATION_URL}
+            - API_URL=https://graph.microsoft.com/v1.0
+            - TOKEN_URL=${TOKEN_URL}
+            - CLIENT_ID=${CLIENT_ID}
+            - CLIENT_SECRET=${CLIENT_SECRET}
+            - AUTH_METHOD=azure
+            - SSO_PRIVATE_KEY=${SSO_PRIVATE_KEY}
+            - SSO_URL=http://localhost/-enterprise/sso
+            - GRAMAX_URL=https://localhost:5173
+            - ALLOWED_GRAMAX_URLS=${ALLOWED_GRAMAX_URLS}
+        networks:
+            - gramax
+
+    cors-proxy:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:cors-proxy-develop
+        container_name: gramax-cors-proxy
+        restart: unless-stopped
+        build:
+            context: ../../
+            dockerfile: ./services/target/cors-proxy/Dockerfile
+        networks:
+            - gramax
+
+    auth:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:auth-develop
+        container_name: gramax-auth
+        restart: unless-stopped
+        environment:
+            - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+            - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+            - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
+            - CONFLUENCE_CLIENT_ID=${CONFLUENCE_CLIENT_ID}
+            - CONFLUENCE_REDIRECT_URI=${CONFLUENCE_REDIRECT_URI}
+            - CONFLUENCE_CLIENT_SECRET=${CONFLUENCE_CLIENT_SECRET}
+            - GITLAB_CLIENT_SECRET=${GITLAB_CLIENT_SECRET}
+            - GITLAB_CLIENT_ID=${GITLAB_CLIENT_ID}
+            - GITLAB_INSTANCE_URL=https://gitlab.ics-it.ru
+            - GITLAB_REDIRECT_URL=http://localhost/-enterprise/auth/gitlab
+        build:
+            context: ../../
+            dockerfile: ./services/target/auth/Dockerfile
+        networks: [gramax]
+
+    enterprise:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:enterprise-develop
+        container_name: gramax-enterprise
+        restart: unless-stopped
+        mem_limit: 256m
+        build:
+            context: ../../
+            dockerfile: ./services/target/enterprise/Dockerfile
+        environment:
+            - SSO_URL=http://localhost/-enterprise/sso
+            - AUTH_SERVICE_URL=http://localhost/-enterprise/auth
+            - ENTERPRISE_URL=http://localhost/-enterprise/enterprise
+            - SOURCE=gitlab
+            - SSO_PRIVATE_KEY=${SSO_PRIVATE_KEY}
+            - GLS_URL=${GLS_URL}
+            - GRAMAX_URL=https://localhost:5173
+            - LICENSE_KEY=${LICENSE_KEY}
+        volumes:
+            - ${WORKSPACE_PATH:-/dev/null}:/app/workspace.yaml
+        networks:
+            - gramax
+
+    diagram-renderer:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:diagram-renderer-develop
+        container_name: gramax-diagram-renderer
+        restart: unless-stopped
+        environment:
+            - DIAGRAM_RENDERER_URL=http://localhost/-enterprise/diagram-renderer
+            - C4DIAGRAM_RENDERER_URL=http://localhost/-enterprise/c4viz
+        build:
+            context: ../../
+            dockerfile: ./services/target/diagram-renderer/Dockerfile
+        networks:
+            - gramax
+
+    c4viz:
+        image: gramax/gramax-c4-server:latest
+        container_name: gramax-c4-server
+        networks: [gramax]
+        restart: unless-stopped
+        logging:
+            driver: none
+
+networks:
+    gramax:
+        name: gramax

@@ -1,0 +1,116 @@
+services:
+    caddy:
+        image: caddy:latest
+        container_name: gramax-caddy
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./Caddyfile:/etc/caddy/Caddyfile
+        networks:
+            - gramax-network
+
+    doc-portal:
+        image: gramax/gramax:latest
+        container_name: gramax-doc-portal
+        restart: unless-stopped
+        # ports:
+        #   - ${PORT:-80}:80
+        # build:
+        #     context: ../../
+        #     dockerfile: ./apps/next/next.Dockerfile
+        environment:
+            - ADMIN_LOGIN=${ADMIN_LOGIN:-admin}
+            - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
+            - AUTO_PULL_TOKEN=${AUTO_PULL_TOKEN:-}
+            - AUTO_PULL_INTERVAL=${AUTO_PULL_INTERVAL:-}
+            - DIAGRAM_RENDERER_SERVICE_URL=http://localhost/-enterprise/diagram-renderer
+            - AUTH_SERVICE_URL=http://localhost/-enterprise/auth
+            - SSO_SERVICE_PUBLIC_KEY=${SSO_SERVICE_PUBLIC_KEY}
+            - SSO_SERVICE_URL=http://localhost/-enterprise/enterprise
+        volumes:
+            - ${ROOT_PATH:-./gramax}:/app/data
+            - type: bind
+              source: ${WORKSPACE_PATH:-/dev/null}
+              target: /app/workspace.yaml
+              volume:
+                  nocopy: true
+        networks:
+            - gramax-network
+
+    diagram-renderer:
+        image: gramax/gramax-diagram-renderer:latest
+        container_name: gramax-diagram-renderer
+        restart: unless-stopped
+        mem_limit: 256m
+        networks:
+            - gramax-network
+
+    c4viz:
+        image: gramax/gramax-c4-server:latest
+        container_name: gramax-c4viz-server
+        restart: unless-stopped
+        mem_limit: 256m
+        logging:
+            driver: none
+        networks:
+            - gramax-network
+
+    cors-proxy:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:cors-proxy-develop
+        container_name: gramax-cors-proxy
+        restart: unless-stopped
+        networks:
+            - gramax-network
+
+    auth:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:auth-develop
+        container_name: gramax-auth
+        restart: unless-stopped
+        build:
+            context: ../../
+            dockerfile: ./services/target/auth/Dockerfile
+        environment:
+            - PORT=80
+            - BASE_URL=/
+            - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+            - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+            - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
+            - CONFLUENCE_CLIENT_ID=${CONFLUENCE_CLIENT_ID}
+            - CONFLUENCE_REDIRECT_URI=${CONFLUENCE_REDIRECT_URI}
+            - CONFLUENCE_CLIENT_SECRET=${CONFLUENCE_CLIENT_SECRET}
+        networks:
+            - gramax-network
+
+    enterprise:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:enterprise-develop
+        container_name: gramax-enterprise
+        restart: unless-stopped
+        mem_limit: 256m
+        build:
+            context: ../../
+            dockerfile: ./services/target/enterprise/Dockerfile
+        environment:
+            - BASE_URL=/
+            - PORT=80
+            - SSO_URL=http://localhost/-enterprise/enterprise
+            - GRAMAX_URL=http://localhost
+            - AUTHORIZATION_URL=${AUTHORIZATION_URL}
+            - TOKEN_URL=${TOKEN_URL}
+            - API_URL=https://graph.microsoft.com/v1.0
+            - CLIENT_ID=${CLIENT_ID}
+            - CLIENT_SECRET=${CLIENT_SECRET}
+            - AUTH_METHOD=azure
+            - SSO_PRIVATE_KEY=${SSO_PRIVATE_KEY}
+        volumes:
+            - type: bind
+              source: ${WORKSPACE_PATH:-/dev/null}
+              target: /app/workspace.yaml
+              volume:
+                  nocopy: true
+        networks:
+            - gramax-network
+
+networks:
+    gramax-network:
+        name: gramax-network
