@@ -70,14 +70,10 @@ services:
             context: ../../
             dockerfile: ./services/target/enterprise/Dockerfile
         environment:
-            - SSO_URL=http://localhost/-enterprise/sso
-            - AUTH_SERVICE_URL=http://localhost/-enterprise/auth
-            - ENTERPRISE_URL=http://localhost/-enterprise/enterprise
-            - SOURCE=gitlab
-            - SSO_PRIVATE_KEY=${SSO_PRIVATE_KEY}
             - GLS_URL=${GLS_URL}
             - GRAMAX_URL=https://localhost:5173
             - LICENSE_KEY=${LICENSE_KEY}
+            - ENTERPRISE_URL=${ENTERPRISE_URL}
         volumes:
             - ${WORKSPACE_PATH:-/dev/null}:/app/workspace.yaml
         networks:

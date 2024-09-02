@@ -93,15 +93,8 @@ services:
         environment:
             - BASE_URL=/
             - PORT=80
-            - SSO_URL=http://localhost/-enterprise/enterprise
+            - ENTERPRISE_URL=http://localhost/-enterprise/enterprise
             - GRAMAX_URL=http://localhost
-            - AUTHORIZATION_URL=${AUTHORIZATION_URL}
-            - TOKEN_URL=${TOKEN_URL}
-            - API_URL=https://graph.microsoft.com/v1.0
-            - CLIENT_ID=${CLIENT_ID}
-            - CLIENT_SECRET=${CLIENT_SECRET}
-            - AUTH_METHOD=azure
-            - SSO_PRIVATE_KEY=${SSO_PRIVATE_KEY}
         volumes:
             - type: bind
               source: ${WORKSPACE_PATH:-/dev/null}
