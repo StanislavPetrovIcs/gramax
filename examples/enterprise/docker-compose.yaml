@@ -24,10 +24,9 @@ services:
             - CLIENT_ID=${CLIENT_ID}
             - CLIENT_SECRET=${CLIENT_SECRET}
             - AUTH_METHOD=azure
-            - SSO_PRIVATE_KEY=${SSO_PRIVATE_KEY}
+            - SSO_SERVICE_ENCRYPTION_KEY=${SSO_SERVICE_ENCRYPTION_KEY}
             - SSO_URL=http://localhost/-enterprise/sso
-            - GRAMAX_URL=https://localhost:5173
-            - ALLOWED_GRAMAX_URLS=${ALLOWED_GRAMAX_URLS}
+            - ALLOWED_GRAMAX_URLS=https://localhost:5173,${ALLOWED_GRAMAX_URLS}
         networks:
             - gramax
 
@@ -71,7 +70,7 @@ services:
             dockerfile: ./services/target/enterprise/Dockerfile
         environment:
             - GLS_URL=${GLS_URL}
-            - GRAMAX_URL=https://localhost:5173
+            - ALLOWED_GRAMAX_URLS=https://localhost:5173
             - LICENSE_KEY=${LICENSE_KEY}
             - ENTERPRISE_URL=${ENTERPRISE_URL}
         volumes:

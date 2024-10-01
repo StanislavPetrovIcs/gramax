@@ -26,7 +26,7 @@ services:
             - AUTO_PULL_INTERVAL=${AUTO_PULL_INTERVAL:-}
             - DIAGRAM_RENDERER_SERVICE_URL=http://localhost/-enterprise/diagram-renderer
             - AUTH_SERVICE_URL=http://localhost/-enterprise/auth
-            - SSO_SERVICE_PUBLIC_KEY=${SSO_SERVICE_PUBLIC_KEY}
+            - SSO_SERVICE_ENCRYPTION_KEY=${SSO_SERVICE_ENCRYPTION_KEY}
             - SSO_SERVICE_URL=http://localhost/-enterprise/enterprise
         volumes:
             - ${ROOT_PATH:-./gramax}:/app/data
@@ -94,7 +94,7 @@ services:
             - BASE_URL=/
             - PORT=80
             - ENTERPRISE_URL=http://localhost/-enterprise/enterprise
-            - GRAMAX_URL=http://localhost
+            - ALLOWED_GRAMAX_URLS=http://localhost
         volumes:
             - type: bind
               source: ${WORKSPACE_PATH:-/dev/null}
