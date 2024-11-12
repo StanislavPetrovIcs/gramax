@@ -1,0 +1,16 @@
+name: ics-it
+groups:
+  products:
+    title: Продукты и сервисы
+    style: big
+  company:
+    title: Внутренняя документация
+  projects:
+    title: Проекты
+source:
+  type: GitLab
+  url: https://gitlab.ics-it.ru
+  repos:
+    - dr/gramax
+    - ics/johnson-n-johnson
+gesUrl: https://enterprise.gram.ax/

@@ -1,0 +1,5 @@
+groups:
+  example_group_name_1:
+    - example@example.com
+  example_group_name_2:
+    - example2@example.com

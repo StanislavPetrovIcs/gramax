@@ -1,0 +1,6 @@
+access:
+  workspaceOwner:
+    gxGroups:
+      - example_group_name
+    group:
+      - example@example.com

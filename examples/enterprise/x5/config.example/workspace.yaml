@@ -1,0 +1,15 @@
+name: workspace_name
+groups:
+  example_group_id:
+    title: Тестовая группа
+    style: big
+  example_group_id_2:
+    title: Тестовая группа 2
+
+source:
+  type: GitLab
+  url: https://gitlab.example.com
+  repos:
+    - repo_group/repo_name
+
+gesUrl: https://enterprise.gram.ax

@@ -25,18 +25,18 @@ services:
             - CLIENT_SECRET=${CLIENT_SECRET}
             - AUTH_METHOD=azure
             - SSO_SERVICE_ENCRYPTION_KEY=${SSO_SERVICE_ENCRYPTION_KEY}
-            - SSO_URL=http://localhost/-enterprise/sso
+            - SSO_SERVICE_URL=http://localhost/-enterprise/sso
             - ALLOWED_GRAMAX_URLS=https://localhost:5173,${ALLOWED_GRAMAX_URLS}
         networks:
             - gramax
 
-    cors-proxy:
-        image: gitlab.ics-it.ru:4567/ics/doc-reader:cors-proxy-develop
-        container_name: gramax-cors-proxy
+    git-proxy:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:git-proxy-develop
+        container_name: gramax-git-proxy
         restart: unless-stopped
         build:
             context: ../../
-            dockerfile: ./services/target/cors-proxy/Dockerfile
+            dockerfile: ./services/target/git-proxy/Dockerfile
         networks:
             - gramax
 
@@ -69,12 +69,10 @@ services:
             context: ../../
             dockerfile: ./services/target/enterprise/Dockerfile
         environment:
-            - GLS_URL=${GLS_URL}
             - ALLOWED_GRAMAX_URLS=https://localhost:5173
             - LICENSE_KEY=${LICENSE_KEY}
-            - ENTERPRISE_URL=${ENTERPRISE_URL}
         volumes:
-            - ${WORKSPACE_PATH:-/dev/null}:/app/workspace.yaml
+            - ${ENTERPRISE_CONFIG_PATH:-/dev/null}:/app
         networks:
             - gramax
 

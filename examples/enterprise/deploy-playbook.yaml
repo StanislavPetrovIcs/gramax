@@ -1,0 +1,58 @@
+- name: Setup Docker and start Gramax
+  hosts: all
+  become: true
+
+  tasks:
+      # - name: Setup docker
+      #   ansible.builtin.import_tasks: ./tasks/setup_docker.yml
+
+      - name: Ensure Docker is started and enabled
+        ansible.builtin.systemd:
+            name: docker
+            state: started
+            enabled: true
+
+      - name: Create /app directory if it doesn't exist
+        ansible.builtin.file:
+            path: /app
+            state: directory
+            mode: "0755"
+
+      - name: Download latest docker-compose file from gram.ax
+        ansible.builtin.get_url:
+            url: "https://gram.ax/enterprise-docker-compose.yaml"
+            dest: "/app/docker-compose.yaml"
+            mode: "0755"
+        retries: 3
+        delay: 5
+        register: compose_file
+
+      - name: Fail if download fails
+        ansible.builtin.fail:
+            msg: "Failed to download docker-compose.yaml"
+        when: compose_file is failed
+
+      - name: Copy workspace settings file to the application directory
+        ansible.builtin.copy:
+            src: "./.env"
+            dest: "/app/.env"
+            mode: "0600"
+
+      - name: Copy workspace settings file to the application directory
+        ansible.builtin.copy:
+            src: "./workspace"
+            dest: "/app/workspace"
+            mode: "0600"
+
+      - name: Login in gramax registry
+        community.docker.docker_login:
+            registry_url: "{{ gramax_registry_url }}"
+            username: "{{ gramax_registry_username }}"
+            password: "{{ gramax_registry_password }}"
+
+      - name: Start and update the Docker Compose services
+        community.docker.docker_compose_v2:
+            project_src: /app/
+            pull: always
+            recreate: always
+            remove_orphans: true

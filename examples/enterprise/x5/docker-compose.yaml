@@ -1,0 +1,207 @@
+services:
+    caddy:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/caddy:2.7.6
+        container_name: enterprise-gramax-caddy
+        restart: unless-stopped
+        entrypoint: /bin/sh
+        ports:
+            - 80:80
+            - 443:443
+        command:
+            - -c
+            - |
+                cat <<EOF > /etc/caddy/Caddyfile && caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+                docportal.gramax.local {
+                    route /* {
+                            reverse_proxy enterprise-gramax-docportal:80
+                        }
+                }
+                enterprise.gramax.local {
+                    route /* {
+                        reverse_proxy enterprise-gramax-git-proxy:80
+                    }
+                    handle_path /enterprise* {
+                        reverse_proxy enterprise-gramax-enterprise:80
+                    }
+                    handle_path /auth* {
+                        reverse_proxy enterprise-gramax-auth:80
+                    }
+                    handle_path /sso* {
+                        reverse_proxy enterprise-gramax-sso:80
+                    }
+                    handle_path /diagram-renderer* {
+                        reverse_proxy enterprise-gramax-diagram-renderer:80
+                    }
+                    handle_path /diagram-renderer/plantuml* {
+                        reverse_proxy enterprise-gramax-plantuml:80
+                    }
+                    handle_path /diagram-renderer/drawio* {
+                        reverse_proxy enterprise-gramax-drawio:80
+                    }
+                    handle_path /admin* {
+                        reverse_proxy enterprise-gramax-admin:80
+                    }
+                }
+                app.gramax.local {
+                    route /* {
+                        reverse_proxy enterprise-gramax-browser:80
+                    }
+                }
+        networks:
+            - gramax
+
+    docportal:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/docportal:prod
+        container_name: enterprise-gramax-docportal
+        restart: unless-stopped
+        environment:
+            - AUTO_PULL_TOKEN=${AUTO_PULL_TOKEN}
+            - AUTO_PULL_INTERVAL=${AUTO_PULL_INTERVAL}
+            - DIAGRAM_RENDERER_SERVICE_URL=${DIAGRAM_RENDERER_SERVICE_URL}
+            - COOKIE_SECRET=${COOKIE_SECRET}
+            - GES_URL=${GES_URL}
+        volumes:
+            - ./docportal:/app/data
+            - ./config:/app/config
+        networks:
+            - gramax
+
+    browser:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/web:prod
+        container_name: enterprise-gramax-browser
+        restart: unless-stopped
+        environment:
+            - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+            - GIT_PROXY_SERVICE_URL=${GIT_PROXY_SERVICE_URL}
+            - DIAGRAM_RENDERER_SERVICE_URL=${DIAGRAM_RENDERER_SERVICE_URL}
+            - GES_URL=${GES_URL}
+            - BUGSNAG_API_KEY=${BUGSNAG_API_KEY}
+            - BUGSNAG_CLIENT_KEY=${BUGSNAG_CLIENT_KEY}
+            - COOKIE_SECRET=${COOKIE_SECRET}
+        networks:
+            - gramax
+
+    admin:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/admin:prod
+        container_name: enterprise-gramax-admin
+        restart: unless-stopped
+        networks:
+            - gramax
+
+    enterprise:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/enterprise:prod
+        container_name: enterprise-gramax-enterprise
+        restart: unless-stopped
+        environment:
+            - LICENSE_KEY=${LICENSE_KEY}
+            - ALLOWED_GRAMAX_URLS=${ALLOWED_GRAMAX_URLS}
+            - SSO_SERVICE_ENCRYPTION_KEY=${SSO_SERVICE_ENCRYPTION_KEY}
+            - GIT_SERVER_TOKEN=${GIT_SERVER_TOKEN}
+            - VAULT_API_VERSION=${VAULT_API_VERSION}
+            - VAULT_TOKEN=${VAULT_TOKEN}
+            - VAULT_ENDPOINT=${VAULT_ENDPOINT}
+            - VAULT_PATH=${VAULT_PATH}
+            - VAULT_MOUNT_PATH=${VAULT_MOUNT_PATH}
+            - ENTERPRISE_SERVICE_ENCRYPTION_KEY=${ENTERPRISE_SERVICE_ENCRYPTION_KEY}
+        volumes:
+            - ./config:/app/config
+        networks:
+            - gramax
+
+    git-proxy:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/git-proxy:prod
+        container_name: enterprise-gramax-git-proxy
+        environment:
+            - ENTERPRISE_SERVICE_ENCRYPTION_KEY=${ENTERPRISE_SERVICE_ENCRYPTION_KEY}
+            - GIT_SERVER_TOKEN=${GIT_SERVER_TOKEN}
+            - ALLOWED_GRAMAX_URLS=${ALLOWED_GRAMAX_URLS}
+            - ENTERPRISE_CONFIG_PATH=/app/config
+        restart: unless-stopped
+        volumes:
+            - ./config:/app/config
+        networks:
+            - gramax
+
+    diagram-renderer:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/diagram-renderer:prod
+        container_name: enterprise-gramax-diagram-renderer
+        restart: unless-stopped
+        environment:
+            - C4DIAGRAM_RENDERER_URL=http://enterprise-gramax-c4-server:9000
+            - DIAGRAM_RENDERER_URL=http://enterprise-gramax-diagram-renderer/diagram-renderer
+        networks:
+            - gramax
+
+    sso:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/sso:prod
+        container_name: enterprise-gramax-sso
+        restart: unless-stopped
+        environment:
+            - API_URL=${API_URL}
+            - AUTHORIZATION_URL=${AUTHORIZATION_URL}
+            - TOKEN_URL=${TOKEN_URL}
+            - CLIENT_ID=${CLIENT_ID}
+            - CLIENT_SECRET=${CLIENT_SECRET}
+            - AUTH_METHOD=${AUTH_METHOD}
+            - SSO_SERVICE_ENCRYPTION_KEY=${SSO_SERVICE_ENCRYPTION_KEY}
+            - SSO_SERVICE_URL=${SSO_SERVICE_URL}
+            - ALLOWED_GRAMAX_URLS=${ALLOWED_GRAMAX_URLS}
+            - ADFS_CERT=${ADFS_CERT}
+            - ADFS_ENTRYPOINT=${ADFS_ENTRYPOINT}
+            - ADFS_ISSUER=${ADFS_ISSUER}
+            - ADFS_CALLBACK_URL=${ADFS_CALLBACK_URL}
+            - OPEN_ID_SERVER_URL=${OPEN_ID_SERVER_URL}
+            - OPEN_ID_REALM=${OPEN_ID_REALM}
+            - OPEN_ID_CLIENT_ID=${OPEN_ID_CLIENT_ID}
+            - OPEN_ID_CLIENT_SECRET=${OPEN_ID_CLIENT_SECRET}
+            - KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL}
+            - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+            - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
+            - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+        networks:
+            - gramax
+
+    auth:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/auth:prod
+        container_name: enterprise-gramax-auth
+        restart: unless-stopped
+        environment:
+            - PORT=80
+            - BASE_URL=/
+            - GITLAB_CLIENT_SECRET=${GITLAB_CLIENT_SECRET}
+            - GITLAB_CLIENT_ID=${GITLAB_CLIENT_ID}
+            - GITLAB_INSTANCE_URL=${GITLAB_INSTANCE_URL}
+            - GITLAB_REDIRECT_URL=${GITLAB_REDIRECT_URL}
+            - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+            - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+            - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
+            - CONFLUENCE_CLIENT_ID=${CONFLUENCE_CLIENT_ID}
+            - CONFLUENCE_CLIENT_SECRET=${CONFLUENCE_CLIENT_SECRET}
+            - CONFLUENCE_REDIRECT_URI=${CONFLUENCE_REDIRECT_URI}
+        networks:
+            - gramax
+
+    c4viz:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/gramax-c4-server:prod
+        container_name: enterprise-gramax-c4-server
+        restart: unless-stopped
+        networks:
+            - gramax
+
+    plantuml:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/plantuml-server:tomcat-v1.2024.7
+        container_name: enterprise-gramax-plantuml
+        restart: unless-stopped
+        networks:
+            - gramax
+
+    drawio:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/drawio:24.3.1
+        container_name: enterprise-gramax-drawio
+        restart: unless-stopped
+        networks:
+            - gramax
+
+networks:
+    gramax:
+        name: gramax

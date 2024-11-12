@@ -7,8 +7,8 @@
         reverse_proxy /-enterprise/enterprise* enterprise:80
     }
 
-    handle_path /-enterprise/cors-proxy* {
-        uri strip_prefix /-enterprise/cors-proxy
-        reverse_proxy cors-proxy:80
+    handle_path /-enterprise/git-proxy* {
+        uri strip_prefix /-enterprise/git-proxy
+        reverse_proxy git-proxy:80
     }
 }

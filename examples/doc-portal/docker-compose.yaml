@@ -30,11 +30,6 @@ services:
             - SSO_SERVICE_URL=http://localhost/-enterprise/enterprise
         volumes:
             - ${ROOT_PATH:-./gramax}:/app/data
-            - type: bind
-              source: ${WORKSPACE_PATH:-/dev/null}
-              target: /app/workspace.yaml
-              volume:
-                  nocopy: true
         networks:
             - gramax-network
 
@@ -56,9 +51,9 @@ services:
         networks:
             - gramax-network
 
-    cors-proxy:
-        image: gitlab.ics-it.ru:4567/ics/doc-reader:cors-proxy-develop
-        container_name: gramax-cors-proxy
+    git-proxy:
+        image: gitlab.ics-it.ru:4567/ics/doc-reader:git-proxy-develop
+        container_name: gramax-git-proxy
         restart: unless-stopped
         networks:
             - gramax-network
@@ -93,12 +88,11 @@ services:
         environment:
             - BASE_URL=/
             - PORT=80
-            - ENTERPRISE_URL=http://localhost/-enterprise/enterprise
             - ALLOWED_GRAMAX_URLS=http://localhost
         volumes:
             - type: bind
-              source: ${WORKSPACE_PATH:-/dev/null}
-              target: /app/workspace.yaml
+              source: ${ENTERPRISE_CONFIG_PATH:-/dev/null}
+              target: /app
               volume:
                   nocopy: true
         networks:
