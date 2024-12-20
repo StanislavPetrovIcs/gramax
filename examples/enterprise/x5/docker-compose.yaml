@@ -33,13 +33,16 @@ services:
                         reverse_proxy enterprise-gramax-diagram-renderer:80
                     }
                     handle_path /diagram-renderer/plantuml* {
-                        reverse_proxy enterprise-gramax-plantuml:80
+                        reverse_proxy enterprise-gramax-plantuml:8080
                     }
                     handle_path /diagram-renderer/drawio* {
-                        reverse_proxy enterprise-gramax-drawio:80
+                        reverse_proxy enterprise-gramax-drawio:8080
                     }
                     handle_path /admin* {
                         reverse_proxy enterprise-gramax-admin:80
+                    }
+                    handle_path /language-tool* {
+                        reverse_proxy enterprise-gramax-language-tool:3001
                     }
                 }
                 app.gramax.local {
@@ -60,6 +63,9 @@ services:
             - DIAGRAM_RENDERER_SERVICE_URL=${DIAGRAM_RENDERER_SERVICE_URL}
             - COOKIE_SECRET=${COOKIE_SECRET}
             - GES_URL=${GES_URL}
+            - MATOMO_SITE_ID=${MATOMO_SITE_ID}
+            - MATOMO_URL=${MATOMO_URL}
+            - MATOMO_CONTAINER_URL=${MATOMO_CONTAINER_URL}
         volumes:
             - ./docportal:/app/data
             - ./config:/app/config
@@ -88,6 +94,13 @@ services:
         networks:
             - gramax
 
+    language-tool:
+        image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/language-tool:prod
+        container_name: enterprise-gramax-language-tool
+        restart: unless-stopped
+        networks:
+            - gramax
+
     enterprise:
         image: registry.gram.ax/gx/enterprise/${CLIENT_NAME:?CLIENT_NAME not set, exiting}/enterprise:prod
         container_name: enterprise-gramax-enterprise
@@ -105,6 +118,7 @@ services:
             - ENTERPRISE_SERVICE_ENCRYPTION_KEY=${ENTERPRISE_SERVICE_ENCRYPTION_KEY}
         volumes:
             - ./config:/app/config
+            - ./custom-certs.pem:/app/certs/custom-certs.pem:ro
         networks:
             - gramax
 
